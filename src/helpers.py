@@ -66,7 +66,7 @@ def extract_title(markdown: str) -> str:
 
     raise Exception()
 
-def generate_page(from_path: Path, template_path: Path, dest_path: Path) -> None:
+def generate_page(from_path: Path, template_path: Path, dest_path: Path, basepath: Path) -> None:
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
 
     with open(from_path, "r") as f: content = f.read()
@@ -74,14 +74,14 @@ def generate_page(from_path: Path, template_path: Path, dest_path: Path) -> None
 
     html = markdown_to_html_node(content).to_html()
     title = extract_title(content)
-    template = template.replace("{{ Title }}", title).replace("{{ Content }}", html)
+    template = template.replace("{{ Title }}", title).replace("{{ Content }}", html.replace('href="/', f'href="{basepath}/').replace('src="/', f'src="{basepath}/'))
 
     dest_path.parent.mkdir(parents = True, exist_ok = True)
     dest_path.write_text(template)
 
-def generate_pages_recursive(dir_path_content: Path, template_path: Path, dest_dir_path: Path) -> None:
+def generate_pages_recursive(dir_path_content: Path, template_path: Path, dest_dir_path: Path, basepath: Path) -> None:
     for item in dir_path_content.iterdir():
         if item.is_file() and item.name.endswith(".md"):
-            generate_page(dir_path_content / item.name, template_path, dest_dir_path / item.name.replace(".md", ".html"))
+            generate_page(dir_path_content / item.name, template_path, dest_dir_path / item.name.replace(".md", ".html"), basepath)
         elif item.is_dir():
-            generate_pages_recursive(dir_path_content / item.name, template_path, dest_dir_path / item.name)
+            generate_pages_recursive(dir_path_content / item.name, template_path, dest_dir_path / item.name, basepath)
